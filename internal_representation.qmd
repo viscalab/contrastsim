@@ -1,0 +1,240 @@
+---
+title: "Untitled"
+format: html
+editor: visual
+---
+
+```{r}
+library(tidyverse)
+```
+
+## Values
+
+```{r}
+X_SEQ <- seq(0, 1 , .01)
+P1 <- .1
+P2 <- 2
+P3 <- .2
+P3_P <- 0.4
+```
+
+
+## Transducers
+
+```{r}
+mu_linear_fun <- function(p, x){
+  p[1] + p[2] * x
+}
+```
+
+
+```{r}
+mu_linear <- tibble(x = X_SEQ) |> 
+  mutate(y = mu_linear_fun(c(P1, P2), x)) # y is the response 
+
+mu_linear |> 
+  ggplot(aes(x = x, y = y)) +
+  geom_line() +
+  coord_cartesian(xlim = c(min(x_seq), max(x_seq)))
+```
+
+## Internal representation
+
+It is defined by a transducer and a form of noise. These cannot be directly measured.  Let's stick to constant noise distributed normally from now (additive noise). 
+
+Let's create a function that generates a response for a given linear transducer and noise. 
+
+```{r}
+r_lineal_fun <- function(p, x) {
+  mu <- mu_linear_fun(c(p[1], p[2]), x)
+  noise <- rnorm(1, # we create just one sample
+                 mean = 0, 
+                 sd = p[3]) # Let's use the third component for the noise
+  
+  mu + noise
+}
+```
+
+Let's generate a response for 0.2 contrast
+
+```{r}
+r_lineal_fun(c(P1, P2, P3), .2)
+```
+
+Let's generate another response for 0.2 contrast
+
+```{r}
+r_lineal_fun(c(P1, P2, P3), .2)
+```
+
+
+Now, let's generate a response for 0.8 contrast
+
+```{r}
+r_lineal_fun(c(P1, P2, P3), .8)
+```
+
+Another one
+
+```{r}
+r_lineal_fun(c(P1, P2, P3), .8)
+```
+
+Now we generate a bunch of responses for different values of contrasts
+
+```{r}
+tibble(x = runif(1000, min = 0, max = 1)) |> 
+  rowwise() |> # we need to use rowwise because our function just create one sample (see APPENDIX BELOW)
+  mutate(y = r_lineal_fun(c(P1, P2, P3), x)) |> 
+  ggplot(aes(x = x, y = y)) +
+  geom_point()
+
+```
+
+## APPENDIX
+
+We can create a function that generate samples for a vector of xs: 
+
+```{r}
+r_lineal_vectorized_fun <- function(p, x) {
+  mu <- mu_linear_fun(c(p[1], p[2]), x)
+  noise <- rnorm(length(x), # we create as many samples as values of xs we have
+                 mean = 0, 
+                 sd = p[3]) # Let's use the third component for the noise
+  
+  mu + noise
+}
+```
+
+
+Example:
+
+```{r}
+r_lineal_vectorized_fun(c(P1, P2, P3), c(.2, .4, .56))
+```
+
+Given that the function is vectorized, we don't need `rowwise` anymore
+
+```{r}
+tibble(x = runif(1000, min = 0, max = 1)) |> 
+  mutate(y = r_lineal_vectorized_fun(c(P1, P2, P3), x)) |> 
+  ggplot(aes(x = x, y = y)) +
+  geom_point()
+
+```
+
+We can even simplify more the formula introducing in the mean argument of `rnorm` the mean 
+```{r}
+r_lineal_fun <- function(p, x) {
+  rnorm(length(x),
+        mean = mu_linear_fun(c(p[1], p[2]), x), 
+        sd = p[3])
+}
+```
+
+## END APPENDIX
+
+
+If in our experiment, we have a fixed values of contrast we will have something like this:
+
+
+```{r}
+crossing(x = seq(0, 1, .2), n = 1:50) |> 
+  mutate(y = r_lineal_vectorized_fun(c(P1, P2, P3), x)) |> 
+  ggplot(aes(x = x, y = y)) +
+  geom_point()
+
+```
+
+
+
+### MORE FORMALLY
+
+The internal respresentation is a probability density function (pdf): 
+
+
+```{r}
+f_lineal_fun <- function(y, p, x) {
+  dnorm(y, 
+        mean = mu_linear_fun(c(p[1], p[2]), x), 
+        sd = p[3]) 
+}
+```
+
+So the parameters `p[1]` and `p[2]` completely specify the transducer and `p[3]` specifies the noise. So given the transducer and the noise, `f`, as a pdf gives us information about the probability to obtain a certain value of the response. 
+
+So given the transducer and the noise, let's plot the values of the pdf for certain values of the response and for a few values of the contrast. 
+
+```{r}
+f_lineal <- crossing(x = seq(0, 1, .2), y = seq(0, 3, .01)) |> 
+  mutate(f = f_lineal_fun(y, c(P1, P2, P3), x))
+
+f_lineal |> 
+  ggplot(aes(x = y, y = f)) +
+  facet_wrap(vars(x), labeller = "label_both") +
+  geom_line() 
+```
+
+We can see for example that for contrast 0.4, responses around 1 are quite likely and responses around 2 are very unlikely. It makes sense looking at the shape of the transducer above. 
+
+Maybe it is easier to visualize `f` flipping the coordinates:
+
+```{r}
+f_lineal |> 
+  ggplot(aes(x = y, y = f)) +
+  facet_wrap(vars(x), labeller = "label_both", nrow = 1) +
+  geom_line() +
+  coord_flip()
+```
+
+We can look at the effect of increasing the noise
+
+```{r}
+crossing(x = seq(0, 1, .2), y = seq(0, 3, .01)) |> 
+  mutate(f = f_lineal_fun(y, c(P1, P2, P3_P), x)) |> 
+  ggplot(aes(x = y, y = f)) +
+  facet_wrap(vars(x), labeller = "label_both", nrow = 1) +
+  geom_line() +
+  coord_flip()
+```
+
+The function `r_lineal_fun` just generates random samples from the pdf `f_lineal_fun`. 
+
+
+## ESTIMATION OF THE PARAMETERS
+
+Let's suppose that we hypothesize that the internal representation could be given by magnitude estimation. We will have a typical problem in statistics, given some data, to estimate the best parameters.
+
+Let's create some fake data
+
+```{r}
+dat_linear_constant <- tibble(x = runif(1000, min = 0, max = 1)) |> 
+  mutate(y = r_lineal_vectorized_fun(c(P1, P2, P3), x)) 
+
+dat_linear_constant |> 
+  ggplot(aes(x = x, y = y)) +
+  geom_point()
+```
+
+The assumptions of linear transduction and constant normal noise are the ones from linear regression. So we can estimate the parameters using the tools for linear regression
+
+
+```{r}
+model <- lm(y ~ x, data = dat_linear_constant)
+
+model
+```
+This give us p1 and p2. To estimate p3 (noise)
+
+```{r}
+sigma(model)
+```
+
+
+
+
+
+
+
+
+
