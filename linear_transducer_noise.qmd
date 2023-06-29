@@ -82,4 +82,5 @@ Plot delta (discrimination):
 data |> ggplot() + geom_line(aes(x= x, y= delta)) + 
   ylim(0, 20)
 ```
-discrimination consistent with Weber's law
+
+discrimination consistent with Weber's law, porportional to contrast
