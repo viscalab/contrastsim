@@ -1,0 +1,97 @@
+---
+title: "Discrimination from linear funcion and constant noise"
+format: html
+editor: visual
+---
+
+Calculate the derivate of raw data (slope) without assuming it is a linear function.
+
+And sigma (sd)
+mu'->Should be the similar numbers, around 2.
+
+```{r}
+library(tidyverse)
+
+list.files("R", full.names = TRUE) |>  walk(source)
+```
+
+
+
+## Values
+
+```{r}
+X_SEQ <- seq(0, 1 , .01)
+P1 <- .1
+P2 <- 2
+P3 <- .2
+P3_P <- 0.4
+```
+
+
+Transducers:
+
+```{r}
+
+mu_linear_fun <- function(p, x){
+  p[1] + p[2] * x
+}
+
+
+r_lineal_fun <- function(p, x) {
+  rnorm(length(x),
+        mean = mu_linear_fun(c(p[1], p[2]), x), 
+        sd = p[3])
+}
+
+
+```
+
+
+Raw_data:
+```{r}
+
+data_raw <- crossing(x = seq(0, 1, .05), n = 1:5000) |> 
+  mutate(y = r_lineal_fun(c(P1, P2, P3), x))
+
+```
+
+
+Plot raw data:
+```{r}
+
+data_raw |> ggplot() + 
+  geom_point(aes(x = x, y = y))
+
+```
+
+
+```{r}
+data <- data_raw |> group_by(x) |>  
+  summarise(mean_y= mean(y), sd_y=sd(y)) |> 
+  ungroup() |> 
+  mutate(dmu = dmu(x, mean_y)) |> 
+  drop_na() |> 
+  mutate(delta = dmu/sd_y)
+```
+
+
+
+Plot mu (mean responses)
+
+```{r}
+data |> ggplot() + geom_line(aes(x = x, y= mean_y))
+```
+
+Plot delta (discrimination):
+
+```{r}
+data |> ggplot() + geom_line(aes(x= x, y= delta)) + 
+  ylim(0, 20)
+```
+
+Constant delta, discrimination does not follow Weber's law.
+
+
+
+
+
