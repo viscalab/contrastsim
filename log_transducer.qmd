@@ -10,8 +10,8 @@ library(tidyverse)
 list.files("R", full.names = TRUE) |>  walk(source)
 ```
 
-
 Transducer
+
 ```{r}
 mu_log_fun <- function(x){
   log(x)
@@ -45,7 +45,6 @@ data_raw |> ggplot() +
   geom_point(aes(x = x, y = y))
 
 ```
-
 
 ```{r}
 data <- data_raw |> group_by(x) |>  
