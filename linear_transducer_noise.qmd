@@ -4,8 +4,6 @@ format: html
 editor: visual
 ---
 
-
-
 ```{r}
 library(tidyverse)
 
@@ -84,5 +82,4 @@ Plot delta (discrimination):
 data |> ggplot() + geom_line(aes(x= x, y= delta)) + 
   ylim(0, 20)
 ```
-
-discrimination is proportional to transducer
+discrimination consistent with Weber's law
