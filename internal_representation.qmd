@@ -18,7 +18,6 @@ P3 <- .2
 P3_P <- 0.4
 ```
 
-
 ## Transducers
 
 ```{r}
@@ -27,7 +26,6 @@ mu_linear_fun <- function(p, x){
 }
 ```
 
-
 ```{r}
 mu_linear <- tibble(x = X_SEQ) |> 
   mutate(y = mu_linear_fun(c(P1, P2), x)) # y is the response 
@@ -35,14 +33,14 @@ mu_linear <- tibble(x = X_SEQ) |>
 mu_linear |> 
   ggplot(aes(x = x, y = y)) +
   geom_line() +
-  coord_cartesian(xlim = c(min(x_seq), max(x_seq)))
+  coord_cartesian(xlim = c(min(X_SEQ), max(X_SEQ)))
 ```
 
 ## Internal representation
 
-It is defined by a transducer and a form of noise. These cannot be directly measured.  Let's stick to constant noise distributed normally from now (additive noise). 
+It is defined by a transducer and a form of noise. These cannot be directly measured. Let's stick to constant noise distributed normally from now (additive noise).
 
-Let's create a function that generates a response for a given linear transducer and noise. 
+Let's create a function that generates a response for a given linear transducer and noise.
 
 ```{r}
 r_lineal_fun <- function(p, x) {
@@ -66,7 +64,6 @@ Let's generate another response for 0.2 contrast
 ```{r}
 r_lineal_fun(c(P1, P2, P3), .2)
 ```
-
 
 Now, let's generate a response for 0.8 contrast
 
@@ -93,7 +90,7 @@ tibble(x = runif(1000, min = 0, max = 1)) |>
 
 ## APPENDIX
 
-We can create a function that generate samples for a vector of xs: 
+We can create a function that generate samples for a vector of xs:
 
 ```{r}
 r_lineal_vectorized_fun <- function(p, x) {
@@ -105,7 +102,6 @@ r_lineal_vectorized_fun <- function(p, x) {
   mu + noise
 }
 ```
-
 
 Example:
 
@@ -123,7 +119,8 @@ tibble(x = runif(1000, min = 0, max = 1)) |>
 
 ```
 
-We can even simplify more the formula introducing in the mean argument of `rnorm` the mean 
+We can even simplify more the formula introducing in the mean argument of `rnorm` the mean
+
 ```{r}
 r_lineal_fun <- function(p, x) {
   rnorm(length(x),
@@ -134,9 +131,7 @@ r_lineal_fun <- function(p, x) {
 
 ## END APPENDIX
 
-
 If in our experiment, we have a fixed values of contrast we will have something like this:
-
 
 ```{r}
 crossing(x = seq(0, 1, .2), n = 1:50) |> 
@@ -146,12 +141,9 @@ crossing(x = seq(0, 1, .2), n = 1:50) |>
 
 ```
 
-
-
 ### MORE FORMALLY
 
-The internal respresentation is a probability density function (pdf): 
-
+The internal respresentation is a probability density function (pdf):
 
 ```{r}
 f_lineal_fun <- function(y, p, x) {
@@ -161,9 +153,9 @@ f_lineal_fun <- function(y, p, x) {
 }
 ```
 
-So the parameters `p[1]` and `p[2]` completely specify the transducer and `p[3]` specifies the noise. So given the transducer and the noise, `f`, as a pdf gives us information about the probability to obtain a certain value of the response. 
+So the parameters `p[1]` and `p[2]` completely specify the transducer and `p[3]` specifies the noise. So given the transducer and the noise, `f`, as a pdf gives us information about the probability to obtain a certain value of the response.
 
-So given the transducer and the noise, let's plot the values of the pdf for certain values of the response and for a few values of the contrast. 
+So given the transducer and the noise, let's plot the values of the pdf for certain values of the response and for a few values of the contrast.
 
 ```{r}
 f_lineal <- crossing(x = seq(0, 1, .2), y = seq(0, 3, .01)) |> 
@@ -175,7 +167,7 @@ f_lineal |>
   geom_line() 
 ```
 
-We can see for example that for contrast 0.4, responses around 1 are quite likely and responses around 2 are very unlikely. It makes sense looking at the shape of the transducer above. 
+We can see for example that for contrast 0.4, responses around 1 are quite likely and responses around 2 are very unlikely. It makes sense looking at the shape of the transducer above.
 
 Maybe it is easier to visualize `f` flipping the coordinates:
 
@@ -198,8 +190,7 @@ crossing(x = seq(0, 1, .2), y = seq(0, 3, .01)) |>
   coord_flip()
 ```
 
-The function `r_lineal_fun` just generates random samples from the pdf `f_lineal_fun`. 
-
+The function `r_lineal_fun` just generates random samples from the pdf `f_lineal_fun`.
 
 ## ESTIMATION OF THE PARAMETERS
 
@@ -218,23 +209,14 @@ dat_linear_constant |>
 
 The assumptions of linear transduction and constant normal noise are the ones from linear regression. So we can estimate the parameters using the tools for linear regression
 
-
 ```{r}
 model <- lm(y ~ x, data = dat_linear_constant)
 
 model
 ```
+
 This give us p1 and p2. To estimate p3 (noise)
 
 ```{r}
 sigma(model)
 ```
-
-
-
-
-
-
-
-
-
