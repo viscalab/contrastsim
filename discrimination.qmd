@@ -21,12 +21,14 @@ p <- 0.2
 
 
 ```{r}
-P <- c(0.0,0.0167, 0.05, 0.2, 0.45)
+P <- c(0.0,0.0167, 0.05, 0.2, 0.45)# valores de contrastes pedestals
 
-incr <- c(0.001, 0.002, 0.005, 0.013, 0.02, 0.04, 0.067, 0.08, 0.1, 0.17, 0.23, 0.31, 0.5)
+incr <- c(0.001, 0.002, 0.005, 0.013, 0.02, 0.04, 0.067, 0.08, 0.1, 0.17, 0.23, 0.31, 0.5)# lo que le sumo al pedestal
 
+
+#tablas de cada pedestal con su respectiva comparación (25 la comparacion)
 c0 <- tibble(c_pedestal=rep(P[1], each = 25*length(incr)),
-             c = rep(P[1] + incr, each = 25))#, c= rep(P[1]+incr, each= 100)) 
+             c = rep(P[1] + incr, each = 25))#
 
 c0167 <- tibble(c_pedestal=rep(P[2], each = 25*length(incr)),
              c = rep(P[2] + incr, each = 25)) 
@@ -42,6 +44,9 @@ c45 <- tibble(c_pedestal=rep(P[5], each = 25*length(incr)),
 
 ```
 
+
+
+## Respuetas internas para el contraste del pedestal y para el contraste del "estimulo". Cada chuck es para un transductor diferente.
 
 
 Linear transducer, constant noise
@@ -86,23 +91,33 @@ Linear transducer, proportional noise
 ```{r}
 c_0_lineal_noise <- c0 |> mutate(y_pedestral = r_lineal_vectorized_fun(c(P1, P2, P3), c_pedestal), 
                     yc = r_lineal_vectorized_fun(c(P1, P2, P3), c),
-                    r = if_else(y_pedestral < yc , 1, 0))
+                    r = if_else(y_pedestral < yc , 1, 0))|> 
+  group_by(c) |> 
+  summarise(p_r = mean(r))
 
 c_0167_lineal_noise <- c0167 |>  mutate(y_pedestral = r_lineal_vectorized_fun(c(P1, P2, P3), c_pedestal), 
                     yc = r_lineal_vectorized_fun(c(P1, P2, P3), c),
-                    r = if_else(y_pedestral < yc , 1, 0))
+                    r = if_else(y_pedestral < yc , 1, 0))|> 
+  group_by(c) |> 
+  summarise(p_r = mean(r))
 
 c_05_lineal_nosie <- c05 |>  mutate(y_pedestral = r_lineal_vectorized_fun(c(P1, P2, P3), c_pedestal), 
                     yc = r_lineal_vectorized_fun(c(P1, P2, P3), c),
-                    r = if_else(y_pedestral < yc , 1, 0))
+                    r = if_else(y_pedestral < yc , 1, 0))|> 
+  group_by(c) |> 
+  summarise(p_r = mean(r))
 
 c_2_lineal_noise <- c2 |>  mutate(y_pedestral = r_lineal_vectorized_fun(c(P1, P2, P3), c_pedestal), 
                     yc = r_lineal_vectorized_fun(c(P1, P2, P3), c),
-                    r = if_else(y_pedestral < yc , 1, 0))
+                    r = if_else(y_pedestral < yc , 1, 0))|> 
+  group_by(c) |> 
+  summarise(p_r = mean(r))
 
 c_45_lineal_noise <- c45 |>  mutate(y_pedestral = r_lineal_vectorized_fun(c(P1, P2, P3), c_pedestal), 
                     yc = r_lineal_vectorized_fun(c(P1, P2, P3), c),
-                    r = if_else(y_pedestral < yc , 1, 0))
+                    r = if_else(y_pedestral < yc , 1, 0))|> 
+  group_by(c) |> 
+  summarise(p_r = mean(r))
 
 ```
 
@@ -112,23 +127,33 @@ log transducer:
 ```{r}
 c_0_log <- c0 |> mutate(y_pedestral = r_log_vectorized_fun(c_pedestal), 
                     yc =r_log_vectorized_fun(c),
-                    r = if_else(y_pedestral < yc , 1, 0))
+                    r = if_else(y_pedestral < yc , 1, 0))|> 
+  group_by(c) |> 
+  summarise(p_r = mean(r))
 
 c_0167_log <- c0167 |>  mutate(y_pedestral = r_log_vectorized_fun(c_pedestal), 
                     yc =r_log_vectorized_fun(c),
-                    r = if_else(y_pedestral < yc , 1, 0))
+                    r = if_else(y_pedestral < yc , 1, 0))|> 
+  group_by(c) |> 
+  summarise(p_r = mean(r))
 
 c_05_log <- c05 |>  mutate(y_pedestral = r_log_vectorized_fun(c_pedestal), 
                     yc =r_log_vectorized_fun(c),
-                    r = if_else(y_pedestral < yc , 1, 0))
+                    r = if_else(y_pedestral < yc , 1, 0))|> 
+  group_by(c) |> 
+  summarise(p_r = mean(r))
 
 c_2_log <- c2 |>  mutate(y_pedestral = r_log_vectorized_fun(c_pedestal), 
                     yc =r_log_vectorized_fun(c),
-                    r = if_else(y_pedestral < yc , 1, 0))
+                    r = if_else(y_pedestral < yc , 1, 0))|> 
+  group_by(c) |> 
+  summarise(p_r = mean(r))
 
 c_45_log <- c45 |>  mutate(y_pedestral = r_log_vectorized_fun(c_pedestal), 
                     yc =r_log_vectorized_fun(c),
-                    r = if_else(y_pedestral < yc , 1, 0))
+                    r = if_else(y_pedestral < yc , 1, 0))|> 
+  group_by(c) |> 
+  summarise(p_r = mean(r))
 
 ```
 
@@ -138,27 +163,37 @@ power transducer:
 ```{r}
 c_0_power <- c0 |> mutate(y_pedestral = r_power_vectorized_fun(c_pedestal, p), 
                     yc =r_power_vectorized_fun(c, p),
-                    r = if_else(y_pedestral < yc , 1, 0))
+                    r = if_else(y_pedestral < yc , 1, 0))|> 
+  group_by(c) |> 
+  summarise(p_r = mean(r))
 
 c_0167_power <- c0167 |>  mutate(y_pedestral = r_power_vectorized_fun(c_pedestal, p), 
                     yc =r_power_vectorized_fun(c, p),
-                    r = if_else(y_pedestral < yc , 1, 0))
+                    r = if_else(y_pedestral < yc , 1, 0))|> 
+  group_by(c) |> 
+  summarise(p_r = mean(r))
 
 c_05_power <- c05 |>  mutate(y_pedestral = r_power_vectorized_fun(c_pedestal, p), 
                     yc =r_power_vectorized_fun(c, p),
-                    r = if_else(y_pedestral < yc , 1, 0))
+                    r = if_else(y_pedestral < yc , 1, 0))|> 
+  group_by(c) |> 
+  summarise(p_r = mean(r))
 
 c_2_power <- c2 |>  mutate(y_pedestral = r_power_vectorized_fun(c_pedestal, p), 
                     yc =r_power_vectorized_fun(c, p),
-                    r = if_else(y_pedestral < yc , 1, 0))
+                    r = if_else(y_pedestral < yc , 1, 0))|> 
+  group_by(c) |> 
+  summarise(p_r = mean(r))
 
 c_45_power <- c45 |>  mutate(y_pedestral = r_power_vectorized_fun(c_pedestal, p), 
                     yc =r_power_vectorized_fun(c, p),
-                    r = if_else(y_pedestral < yc , 1, 0))
+                    r = if_else(y_pedestral < yc , 1, 0))|> 
+  group_by(c) |> 
+  summarise(p_r = mean(r))
 ```
 
 
-
+Plot lineal constant noise:
 ```{r}
 c_0_linal |> ggplot() + geom_point(aes(x = c, y = p_r))
 
@@ -169,7 +204,34 @@ c_45_lineal |> ggplot() + geom_point(aes(x = c, y = p_r))
 
 ```
 
+Lineal proportional noise
 ```{r}
+c_0_lineal_noise |> ggplot() + geom_point(aes(x = c, y = p_r))
 
+c_0167_lineal_noise |> ggplot() + geom_point(aes(x = c, y = p_r))
+c_05_lineal_nosie |> ggplot() + geom_point(aes(x = c, y = p_r))
+c_2_lineal_noise |> ggplot() + geom_point(aes(x = c, y = p_r))
+c_45_lineal_noise |> ggplot() + geom_point(aes(x = c, y = p_r))
+```
+
+Log
+```{r}
+c_0_log |> ggplot() + geom_point(aes(x = c, y = p_r))
+
+c_0167_log |> ggplot() + geom_point(aes(x = c, y = p_r))
+c_05_log |> ggplot() + geom_point(aes(x = c, y = p_r))
+c_2_log |> ggplot() + geom_point(aes(x = c, y = p_r))
+c_45_log |> ggplot() + geom_point(aes(x = c, y = p_r))
+```
+
+
+Power
+```{r}
+c_0_power |> ggplot() + geom_point(aes(x = c, y = p_r))
+
+c_0167_power |> ggplot() + geom_point(aes(x = c, y = p_r))
+c_05_power |> ggplot() + geom_point(aes(x = c, y = p_r))
+c_2_power |> ggplot() + geom_point(aes(x = c, y = p_r))
+c_45_power |> ggplot() + geom_point(aes(x = c, y = p_r))
 ```
 
