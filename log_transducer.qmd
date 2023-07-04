@@ -1,0 +1,68 @@
+---
+title: "Logaritmic transducer with contant noise"
+format: html
+editor: visual
+---
+
+```{r}
+library(tidyverse)
+
+list.files("R", full.names = TRUE) |>  walk(source)
+```
+
+Transducer
+
+```{r}
+mu_log_fun <- function(x){
+  log(x)
+}
+
+
+r_log_vectorized_fun <- function(x) {
+  mu <- mu_log_fun(x)
+  noise <- rnorm(length(x), # we create as many samples as values of xs we have
+                 mean = 0, 
+                 sd = 0.02) # Let's use the third component for the noise
+  
+  mu + noise
+}
+```
+
+Raw_data:
+
+```{r}
+
+data_raw <- crossing(x = seq(0, 1, .05), n = 1:5000) |> 
+  mutate(y = r_log_vectorized_fun(x))
+
+```
+
+Plot raw data:
+
+```{r}
+
+data_raw |> ggplot() + 
+  geom_point(aes(x = x, y = y))
+
+```
+
+```{r}
+data <- data_raw |> group_by(x) |>  
+  summarise(mean_y= mean(y), sd_y=sd(y)) |> 
+  ungroup() |> 
+  mutate(dmu = dmu(x, mean_y)) |> 
+  drop_na() |> 
+  mutate(delta = dmu/sd_y)
+```
+
+Plot mu (mean responses)
+
+```{r}
+data |> ggplot() + geom_line(aes(x = x, y= mean_y))
+```
+
+Plot delta (discrimination):
+
+```{r}
+data |> ggplot() + geom_line(aes(x= x, y= delta))
+```

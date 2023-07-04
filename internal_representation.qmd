@@ -33,7 +33,7 @@ mu_linear <- tibble(x = X_SEQ) |>
 mu_linear |> 
   ggplot(aes(x = x, y = y)) +
   geom_line() +
-  coord_cartesian(xlim = c(min(x_seq), max(x_seq)))
+  coord_cartesian(xlim = c(min(X_SEQ), max(X_SEQ)))
 ```
 
 ## Internal representation
