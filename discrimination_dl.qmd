@@ -1,0 +1,93 @@
+---
+title: "Discrimination"
+format: html
+editor: visual
+---
+
+```{r}
+library(tidyverse)
+library(quickpsy)
+
+list.files("R", full.names = TRUE) |>  walk(source)
+
+```
+
+Values:
+
+```{r}
+
+P1 <- .1
+P2 <- 2
+P3 <- .2
+
+p <- 0.2
+```
+
+```{r}
+xt <- c(0.0,0.0167, 0.05, 0.2, 0.45)# valores de contrastes pedestals
+
+incr <- c(0.001, 0.002, 0.005, 0.013, 0.02, 0.04, 0.067, 0.08, 0.1, 0.17, 0.23, 0.31, 0.5)# lo que le sumo al pedestal
+
+
+
+```
+
+```{r}
+dat <- crossing(sample = 1:250, 
+                xt = xt, 
+                incr = incr) |> 
+  mutate(xc = xt + incr) |> 
+  mutate(yt = r_lineal_fun(c(P1, P2, P3), xt), 
+         yc = r_lineal_fun(c(P1, P2, P3), xc),
+         r = if_else(yt < yc , 1, 0))
+```
+
+
+```{r}
+proportions <- dat |> 
+  group_by(xt, xc) |> 
+  summarise(p_r = mean(r), .groups = "keep")
+```
+
+```{r}
+ ggplot() +
+  facet_wrap(vars(xt)) +
+  geom_point(data = proportions, 
+             aes(x = xc, y = p_r))
+```
+Now, the analysis is like real data from an experiment. We can fit a psychometric function to each pedestal. 
+
+```{r}
+fit <- quickpsy(dat, xc, r, grouping = c("xt"), 
+                guess = 0.5,
+                bootstrap = "none")
+```
+
+
+Notice that quickpsy already calculate the proportions, so de don't actually need to calculate them by hand. 
+
+```{r}
+ ggplot() +
+  facet_wrap(vars(xt)) +
+  geom_point(data = fit$averages, 
+             aes(x = xc, y = prob)) + 
+  geom_line(data = fit$curves, 
+            aes(x = x, y = y)) +
+  geom_segment(data = fit$thresholds, 
+               aes(x = thre, xend = thre, y = 0.25, yend = prob))
+```
+
+```{r}
+sensitivity <- fit$thresholds |> 
+  mutate(thre_relative_to_pedestal = thre - xt, # bad name (pedagogical purposes only)
+         sensitivity = 1 / thre_relative_to_pedestal)
+  
+
+sensitivity |> 
+  ggplot(aes(x = xt, y = sensitivity)) +
+  geom_point() +
+  geom_line() + 
+  ylim(0, 20)
+```
+
+
