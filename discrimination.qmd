@@ -29,19 +29,19 @@ incr <- c(0.001, 0.002, 0.005, 0.013, 0.02, 0.04, 0.067, 0.08, 0.1, 0.17, 0.23, 
 
 #tablas de cada pedestal con su respectiva comparación (25 la comparacion)
 c0 <- tibble(xt=rep(xt[1], each = 25*length(incr)),
-             xc = rep(P[1] + incr, each = 25))#
+             xc = rep(xt[1] + incr, each = 25))#
 
-c0167 <- tibble(xt=rep(P[2], each = 25*length(incr)),
-             xc = rep(P[2] + incr, each = 25)) 
+c0167 <- tibble(xt=rep(xt[2], each = 25*length(incr)),
+             xc = rep(xt[2] + incr, each = 25)) 
 
-c05 <- tibble(xt=rep(P[3], each = 25*length(incr)),
-             xc = rep(P[3] + incr, each = 25))  
+c05 <- tibble(xt=rep(xt[3], each = 25*length(incr)),
+             xc = rep(xt[3] + incr, each = 25))  
 
-c2 <- tibble(xt=rep(P[4], each = 25*length(incr)),
-             xc = rep(P[4] + incr, each = 25))  
+c2 <- tibble(xt=rep(xt[4], each = 25*length(incr)),
+             xc = rep(xt[4] + incr, each = 25))  
 
-c45 <- tibble(xt=rep(P[5], each = 25*length(incr)),
-             xc = rep(P[5] + incr, each = 25))  
+c45 <- tibble(xt=rep(xt[5], each = 25*length(incr)),
+             xc = rep(xt[5] + incr, each = 25))  
 
 ```
 
