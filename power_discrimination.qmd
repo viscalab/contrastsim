@@ -1,0 +1,76 @@
+---
+title: "Discrimination tasks with power transducer:"
+format: html
+editor: visual
+---
+
+```{r}
+library(tidyverse)
+library(quickpsy)
+
+list.files("R", full.names = TRUE) |>  walk(source)
+
+```
+
+Values:
+
+```{r}
+
+p <- 0.2
+```
+
+```{r}
+xt <- c(0.0,0.0167, 0.05, 0.2, 0.45)# valores de contrastes pedestals
+
+incr <- c(0.001, 0.002, 0.005, 0.013, 0.02, 0.04, 0.067, 0.08, 0.1, 0.17, 0.23, 0.31, 0.5)# lo que le sumo al pedestal
+
+```
+
+## power transducer:
+
+### Generate data:
+
+```{r}
+dat_power<- crossing(sample = 1:250, 
+                xt = xt, 
+                incr = incr) |> 
+  mutate(xc = xt + incr) |> 
+  mutate(yt =r_power_vectorized_fun(xt, p), 
+         yc = r_power_vectorized_fun(xc, p),
+         r = if_else(yt < yc , 1, 0))
+```
+
+### Fit psychometric function:
+
+```{r}
+fit_power <- quickpsy(dat_power, xc, r, grouping = c("xt"), 
+                guess = 0.5,
+                bootstrap = "none")
+```
+
+```{r}
+ ggplot() +
+  facet_wrap(vars(xt)) +
+  geom_point(data = fit_power$averages, 
+             aes(x = xc, y = prob)) + 
+  geom_line(data = fit_power$curves, 
+            aes(x = x, y = y)) +
+  geom_segment(data = fit_power$thresholds, 
+               aes(x = thre, xend = thre, y = 0.25, yend = prob))+
+  coord_cartesian(xlim = c(0, 1))
+```
+
+### Sensitivity
+
+```{r}
+sensitivity_power <- fit_power$thresholds |> 
+  mutate(thre_relative_to_pedestal = thre - xt, 
+         sensitivity = 1 / thre_relative_to_pedestal)
+  
+
+sensitivity_power |> 
+  ggplot(aes(x = xt, y = sensitivity)) +
+  geom_point() +
+  geom_line() 
+
+```

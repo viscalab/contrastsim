@@ -1,13 +1,15 @@
 ---
-title: "Discrimination"
+title: "discr"
 format: html
 editor: visual
 ---
 
 ```{r}
 library(tidyverse)
+library(quickpsy)
 
 list.files("R", full.names = TRUE) |>  walk(source)
+
 ```
 
 Values:
@@ -26,208 +28,198 @@ xt <- c(0.0,0.0167, 0.05, 0.2, 0.45)# valores de contrastes pedestals
 
 incr <- c(0.001, 0.002, 0.005, 0.013, 0.02, 0.04, 0.067, 0.08, 0.1, 0.17, 0.23, 0.31, 0.5)# lo que le sumo al pedestal
 
-
-#tablas de cada pedestal con su respectiva comparación (25 la comparacion)
-c0 <- tibble(xt=rep(xt[1], each = 25*length(incr)),
-             xc = rep(xt[1] + incr, each = 25))#
-
-c0167 <- tibble(xt=rep(xt[2], each = 25*length(incr)),
-             xc = rep(xt[2] + incr, each = 25)) 
-
-c05 <- tibble(xt=rep(xt[3], each = 25*length(incr)),
-             xc = rep(xt[3] + incr, each = 25))  
-
-c2 <- tibble(xt=rep(xt[4], each = 25*length(incr)),
-             xc = rep(xt[4] + incr, each = 25))  
-
-c45 <- tibble(xt=rep(xt[5], each = 25*length(incr)),
-             xc = rep(xt[5] + incr, each = 25))  
-
 ```
 
-## Respuetas internas para el contraste del pedestal y para el contraste del "estimulo". Cada chuck es para un transductor diferente.
+# Lineal transducer, constant noise:
 
-Linear transducer, constant noise
+## Generate the data:
+
+```{r}
+dat_lineal <- crossing(sample = 1:250, 
+                xt = xt, 
+                incr = incr) |> 
+  mutate(xc = xt + incr) |> 
+  mutate(yt = r_lineal_fun(c(P1, P2, P3), xt), 
+         yc = r_lineal_fun(c(P1, P2, P3), xc),
+         r = if_else(yt < yc , 1, 0))
+```
+
+## Fit psychometric function
+
+```{r}
+fit_lineal <- quickpsy(dat_lineal, xc, r, grouping = c("xt"), 
+                guess = 0.5,
+                bootstrap = "none")
+```
+
+```{r}
+ ggplot() +
+  facet_wrap(vars(xt)) +
+  geom_point(data = fit_lineal$averages, 
+             aes(x = xc, y = prob)) + 
+  geom_line(data = fit_lineal$curves, 
+            aes(x = x, y = y)) +
+  geom_segment(data = fit_lineal$thresholds, 
+               aes(x = thre, xend = thre, y = 0.25, yend = prob))
+```
+
+## Sensitivity:
+
+```{r}
+sensitivity_lineal <- fit_lineal$thresholds |> 
+  mutate(thre_relative_to_pedestal = thre - xt, 
+         sensitivity = 1 / thre_relative_to_pedestal)
+  
+
+sensitivity_lineal |> 
+  ggplot(aes(x = xt, y = sensitivity)) +
+  geom_point() +
+  geom_line() + 
+  ylim(0, 20)
+```
+
+# Lineal transducer, proportional noise:
+
+## Generate the data:
+
+```{r}
+dat_lineal_noise <- crossing(sample = 1:250, 
+                xt = xt, 
+                incr = incr) |> 
+  mutate(xc = xt + incr) |> 
+  mutate(yt = r_lineal_vectorized_fun(c(P1, P2, P3), xt), 
+         yc = r_lineal_vectorized_fun(c(P1, P2, P3), xc),
+         r = if_else(yt < yc , 1, 0))
+```
+
+## Fit psychometric function:
+
+```{r}
+fit_lineal_noise <- quickpsy(dat_lineal_noise, xc, r, grouping = c("xt"), 
+                guess = 0.5,
+                bootstrap = "none")
+```
+
+```{r}
+ ggplot() +
+  facet_wrap(vars(xt)) +
+  geom_point(data = fit_lineal_noise$averages, 
+             aes(x = xc, y = prob)) + 
+  geom_line(data = fit_lineal_noise$curves, 
+            aes(x = x, y = y)) +
+  geom_segment(data = fit_lineal_noise$thresholds, 
+               aes(x = thre, xend = thre, y = 0.25, yend = prob))
+```
+
+## Sensitivity:
+
+```{r}
+sensitivity_lineal_noise <- fit_lineal_noise$thresholds |> 
+  mutate(thre_relative_to_pedestal = thre - xt, 
+         sensitivity = 1 / thre_relative_to_pedestal)
+  
+
+sensitivity_lineal_noise |> 
+  ggplot(aes(x = xt, y = sensitivity)) +
+  geom_point() +
+  geom_line() 
+```
+
+# log transducer:
+
+## Generate the data:
+
+```{r}
+dat_log <- crossing(sample = 1:250, 
+                xt = xt, 
+                incr = incr) |> 
+  mutate(xc = xt + incr) |> 
+  mutate(yt = r_log_vectorized_fun(xt), 
+         yc = r_log_vectorized_fun(xc),
+         r = if_else(yt < yc , 1, 0))
+```
+
+## Fit psychometric function:
+
+```{r}
+fit_log <- quickpsy(dat_log, xc, r, grouping = c("xt"), 
+                guess = 0.5,
+                bootstrap = "none")
+```
 
 ```{r}
 
-c_0_linal <- c0 |>  mutate(yt = r_lineal_fun(c(P1, P2, P3), xt), 
-                    yc = r_lineal_fun(c(P1, P2, P3), xc),
-                    r = if_else(yt < yc , 1, 0)) |> 
-  group_by(xc) |> 
-  summarise(p_r = mean(r))
-
-c_0167_lineal <- c0167 |> mutate(yt = r_lineal_fun(c(P1, P2, P3), xt), 
-                          yc = r_lineal_fun(c(P1, P2, P3), xc),
-                          r = if_else(yt < yc , 1, 0)) |> 
-  group_by(xc) |> 
-  summarise(p_r = mean(r))
-
-c_05_lineal <- c05 |> mutate(yt = r_lineal_fun(c(P1, P2, P3), xt), 
-                      yc=r_lineal_fun(c(P1, P2, P3), xc),
-                      r = if_else(yt < yc , 1, 0)) |> 
-  group_by(xc) |> 
-  summarise(p_r = mean(r))
-
-c_2_lineal <- c2 |> mutate(yt = r_lineal_fun(c(P1, P2, P3), xt),
-                    yc=r_lineal_fun(c(P1, P2, P3), xc),
-                    r = if_else(yt < yc , 1, 0)) |> 
-  group_by(xc) |> 
-  summarise(p_r = mean(r))
-
-c_45_lineal <- c45 |> mutate(yt = r_lineal_fun(c(P1, P2, P3),xt), 
-                      yc=r_lineal_fun(c(P1, P2, P3), xc),
-                      r = if_else(yt < yc , 1, 0)) |> 
-  group_by(xc) |> 
-  summarise(p_r = mean(r))
-
+ ggplot() +
+  facet_wrap(vars(xt)) +
+  geom_point(data = fit_log$averages, 
+             aes(x = xc, y = prob)) + 
+  geom_line(data = fit_log$curves, 
+            aes(x = x, y = y)) +
+  geom_segment(data = fit_log$thresholds, 
+               aes(x = thre, xend = thre, y = 0.25, yend = prob)) +
+   coord_cartesian(xlim = c(0, 1))
+ 
 ```
 
-Linear transducer, proportional noise
+## Sensitvity:
 
 ```{r}
-c_0_lineal_noise <- c0 |> mutate(yt = r_lineal_vectorized_fun(c(P1, P2, P3), xt), 
-                    yc = r_lineal_vectorized_fun(c(P1, P2, P3), xc),
-                    r = if_else(yt < yc , 1, 0))|> 
-  group_by(xc) |> 
-  summarise(p_r = mean(r))
+sensitivity_log <- fit_log$thresholds |> 
+  mutate(thre_relative_to_pedestal = thre - xt, 
+         sensitivity = 1 / thre_relative_to_pedestal)
+  
 
-c_0167_lineal_noise <- c0167 |> mutate(yt = r_lineal_vectorized_fun(c(P1, P2, P3), xt), 
-                    yc = r_lineal_vectorized_fun(c(P1, P2, P3), xc),
-                    r = if_else(yt < yc , 1, 0))|> 
-  group_by(xc) |> 
-  summarise(p_r = mean(r))
-
-c_05_lineal_nosie <- c05 |>  mutate(yt = r_lineal_vectorized_fun(c(P1, P2, P3), xt), 
-                    yc = r_lineal_vectorized_fun(c(P1, P2, P3), xc),
-                    r = if_else(yt < yc , 1, 0))|> 
-  group_by(xc) |> 
-  summarise(p_r = mean(r))
-
-c_2_lineal_noise <- c2 |>  mutate(yt = r_lineal_vectorized_fun(c(P1, P2, P3), xt), 
-                    yc = r_lineal_vectorized_fun(c(P1, P2, P3), xc),
-                    r = if_else(yt < yc , 1, 0))|> 
-  group_by(xc) |> 
-  summarise(p_r = mean(r))
-
-c_45_lineal_noise <- c45 |>  mutate(yt = r_lineal_vectorized_fun(c(P1, P2, P3), xt), 
-                    yc = r_lineal_vectorized_fun(c(P1, P2, P3), xc),
-                    r = if_else(yt < yc , 1, 0))|> 
-  group_by(xc) |> 
-  summarise(p_r = mean(r))
-
+sensitivity_log |> 
+  ggplot(aes(x = xt, y = sensitivity)) +
+  geom_point() +
+  geom_line()
 ```
 
-log transducer:
+# power transducer:
+
+## Generate data:
 
 ```{r}
-c_0_log <- c0 |> mutate(yt = r_log_vectorized_fun(xt), 
-                    yc =r_log_vectorized_fun(xc),
-                    r = if_else(yt < yc , 1, 0))|> 
-  group_by(xc) |> 
-  summarise(p_r = mean(r))
-
-c_0167_log <- c0167 |>  mutate(yt = r_log_vectorized_fun(xt), 
-                    yc =r_log_vectorized_fun(xc),
-                    r = if_else(yt < yc , 1, 0))|> 
-  group_by(xc) |> 
-  summarise(p_r = mean(r))
-
-c_05_log <- c05 |>  mutate(yt = r_log_vectorized_fun(xt), 
-                    yc =r_log_vectorized_fun(xc),
-                    r = if_else(yt < yc , 1, 0))|> 
-  group_by(xc) |> 
-  summarise(p_r = mean(r))
-
-c_2_log <- c2 |>  mutate(yt = r_log_vectorized_fun(xt), 
-                    yc =r_log_vectorized_fun(xc),
-                    r = if_else(yt < yc , 1, 0))|> 
-  group_by(xc) |> 
-  summarise(p_r = mean(r))
-
-c_45_log <- c45 |>  mutate(yt = r_log_vectorized_fun(xt), 
-                    yc =r_log_vectorized_fun(xc),
-                    r = if_else(yt < yc , 1, 0))|> 
-  group_by(xc) |> 
-  summarise(p_r = mean(r))
-
+dat_power<- crossing(sample = 1:250, 
+                xt = xt, 
+                incr = incr) |> 
+  mutate(xc = xt + incr) |> 
+  mutate(yt =r_power_vectorized_fun(xt, p), 
+         yc = r_power_vectorized_fun(xc, p),
+         r = if_else(yt < yc , 1, 0))
 ```
 
-power transducer:
+## Fit psychometric function:
 
 ```{r}
-c_0_power <- c0 |> mutate(yt = r_power_vectorized_fun(xt, p), 
-                    yc =r_power_vectorized_fun(xc, p),
-                    r = if_else(yt < yc , 1, 0))|> 
-  group_by(xc) |> 
-  summarise(p_r = mean(r))
-
-c_0167_power <- c0167 |>  mutate(yt = r_power_vectorized_fun(xt, p), 
-                    yc =r_power_vectorized_fun(xc, p),
-                    r = if_else(yt < yc , 1, 0))|> 
-  group_by(xc) |> 
-  summarise(p_r = mean(r))
-
-c_05_power <- c05 |> mutate(yt = r_power_vectorized_fun(xt, p), 
-                    yc =r_power_vectorized_fun(xc, p),
-                    r = if_else(yt < yc , 1, 0))|> 
-  group_by(xc) |> 
-  summarise(p_r = mean(r))
-
-c_2_power <- c2 |>  mutate(yt = r_power_vectorized_fun(xt, p), 
-                    yc =r_power_vectorized_fun(xc, p),
-                    r = if_else(yt < yc , 1, 0))|> 
-  group_by(xc) |> 
-  summarise(p_r = mean(r))
-
-c_45_power <- c45 |>  mutate(yt = r_power_vectorized_fun(xt, p), 
-                    yc =r_power_vectorized_fun(xc, p),
-                    r = if_else(yt < yc , 1, 0))|> 
-  group_by(xc) |> 
-  summarise(p_r = mean(r))
+fit_power <- quickpsy(dat_power, xc, r, grouping = c("xt"), 
+                guess = 0.5,
+                bootstrap = "none")
 ```
 
-Plot lineal constant noise:
-
 ```{r}
-c_0_linal |> ggplot() + geom_point(aes(x = xc, y = p_r))
-
-c_0167_lineal |> ggplot() + geom_point(aes(x = xc, y = p_r))
-c_05_lineal |> ggplot() + geom_point(aes(x = xc, y = p_r))
-c_2_lineal |> ggplot() + geom_point(aes(x = xc, y = p_r))
-c_45_lineal |> ggplot() + geom_point(aes(x = xc, y = p_r))
-
+ ggplot() +
+  facet_wrap(vars(xt)) +
+  geom_point(data = fit_power$averages, 
+             aes(x = xc, y = prob)) + 
+  geom_line(data = fit_power$curves, 
+            aes(x = x, y = y)) +
+  geom_segment(data = fit_power$thresholds, 
+               aes(x = thre, xend = thre, y = 0.25, yend = prob))+
+  coord_cartesian(xlim = c(0, 1))
 ```
 
-Lineal proportional noise
+## Sensitivity
 
 ```{r}
-c_0_lineal_noise |> ggplot() + geom_point(aes(x = xc, y = p_r))
+sensitivity_power <- fit_power$thresholds |> 
+  mutate(thre_relative_to_pedestal = thre - xt, 
+         sensitivity = 1 / thre_relative_to_pedestal)
+  
 
-c_0167_lineal_noise |> ggplot() + geom_point(aes(x = xc, y = p_r))
-c_05_lineal_nosie |> ggplot() + geom_point(aes(x = xc, y = p_r))
-c_2_lineal_noise |> ggplot() + geom_point(aes(x = xc, y = p_r))
-c_45_lineal_noise |> ggplot() + geom_point(aes(x = xc, y = p_r))
-```
+sensitivity_power |> 
+  ggplot(aes(x = xt, y = sensitivity)) +
+  geom_point() +
+  geom_line() 
 
-Log
-
-```{r}
-c_0_log |> ggplot() + geom_point(aes(x = xc, y = p_r))
-
-c_0167_log |> ggplot() + geom_point(aes(x = xc, y = p_r))
-c_05_log |> ggplot() + geom_point(aes(x = xc, y = p_r))
-c_2_log |> ggplot() + geom_point(aes(x = xc, y = p_r))
-c_45_log |> ggplot() + geom_point(aes(x = xc, y = p_r))
-```
-
-Power
-
-```{r}
-c_0_power |> ggplot() + geom_point(aes(x = xc, y = p_r))
-
-c_0167_power |> ggplot() + geom_point(aes(x = xc, y = p_r))
-c_05_power |> ggplot() + geom_point(aes(x = xc, y = p_r))
-c_2_power |> ggplot() + geom_point(aes(x = xc, y = p_r))
-c_45_power |> ggplot() + geom_point(aes(x = xc, y = p_r))
 ```

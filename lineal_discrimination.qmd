@@ -1,0 +1,78 @@
+---
+title: "Discrimination tasks with lineal transducer and constant noise:"
+format: html
+editor: visual
+---
+
+```{r}
+library(tidyverse)
+library(quickpsy)
+
+list.files("R", full.names = TRUE) |>  walk(source)
+
+```
+
+Values:
+
+```{r}
+
+P1 <- .1
+P2 <- 2
+P3 <- .2
+
+```
+
+```{r}
+xt <- c(0.0,0.0167, 0.05, 0.2, 0.45)# valores de contrastes pedestals
+
+incr <- c(0.001, 0.002, 0.005, 0.013, 0.02, 0.04, 0.067, 0.08, 0.1, 0.17, 0.23, 0.31, 0.5)# lo que le sumo al pedestal
+
+```
+
+## Lineal transducer, constant noise:
+
+### Generate the data:
+
+```{r}
+dat_lineal <- crossing(sample = 1:250, 
+                xt = xt, 
+                incr = incr) |> 
+  mutate(xc = xt + incr) |> 
+  mutate(yt = r_lineal_fun(c(P1, P2, P3), xt), 
+         yc = r_lineal_fun(c(P1, P2, P3), xc),
+         r = if_else(yt < yc , 1, 0))
+```
+
+### Fit psychometric function
+
+```{r}
+fit_lineal <- quickpsy(dat_lineal, xc, r, grouping = c("xt"), 
+                guess = 0.5,
+                bootstrap = "none")
+```
+
+```{r}
+ ggplot() +
+  facet_wrap(vars(xt)) +
+  geom_point(data = fit_lineal$averages, 
+             aes(x = xc, y = prob)) + 
+  geom_line(data = fit_lineal$curves, 
+            aes(x = x, y = y)) +
+  geom_segment(data = fit_lineal$thresholds, 
+               aes(x = thre, xend = thre, y = 0.25, yend = prob))
+```
+
+### Sensitivity:
+
+```{r}
+sensitivity_lineal <- fit_lineal$thresholds |> 
+  mutate(thre_relative_to_pedestal = thre - xt, 
+         sensitivity = 1 / thre_relative_to_pedestal)
+  
+
+sensitivity_lineal |> 
+  ggplot(aes(x = xt, y = sensitivity)) +
+  geom_point() +
+  geom_line() + 
+  ylim(0, 20)
+```

@@ -1,0 +1,72 @@
+---
+title: "Discrimination tasks with log transducer:"
+format: html
+editor: visual
+---
+
+```{r}
+library(tidyverse)
+library(quickpsy)
+
+list.files("R", full.names = TRUE) |>  walk(source)
+
+```
+
+Values:
+
+```{r}
+xt <- c(0.0,0.0167, 0.05, 0.2, 0.45)# valores de contrastes pedestals
+
+incr <- c(0.001, 0.002, 0.005, 0.013, 0.02, 0.04, 0.067, 0.08, 0.1, 0.17, 0.23, 0.31, 0.5)# lo que le sumo al pedestal
+
+```
+
+## log transducer:
+
+### Generate the data:
+
+```{r}
+dat_log <- crossing(sample = 1:250, 
+                xt = xt, 
+                incr = incr) |> 
+  mutate(xc = xt + incr) |> 
+  mutate(yt = r_log_vectorized_fun(xt), 
+         yc = r_log_vectorized_fun(xc),
+         r = if_else(yt < yc , 1, 0))
+```
+
+### Fit psychometric function:
+
+```{r}
+fit_log <- quickpsy(dat_log, xc, r, grouping = c("xt"), 
+                guess = 0.5,
+                bootstrap = "none")
+```
+
+```{r}
+
+ ggplot() +
+  facet_wrap(vars(xt)) +
+  geom_point(data = fit_log$averages, 
+             aes(x = xc, y = prob)) + 
+  geom_line(data = fit_log$curves, 
+            aes(x = x, y = y)) +
+  geom_segment(data = fit_log$thresholds, 
+               aes(x = thre, xend = thre, y = 0.25, yend = prob)) +
+   coord_cartesian(xlim = c(0, 1))
+ 
+```
+
+### Sensitvity:
+
+```{r}
+sensitivity_log <- fit_log$thresholds |> 
+  mutate(thre_relative_to_pedestal = thre - xt, 
+         sensitivity = 1 / thre_relative_to_pedestal)
+  
+
+sensitivity_log |> 
+  ggplot(aes(x = xt, y = sensitivity)) +
+  geom_point() +
+  geom_line()
+```

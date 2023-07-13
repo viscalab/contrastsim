@@ -6,16 +6,13 @@ editor: visual
 
 Calculate the derivate of raw data (slope) without assuming it is a linear function.
 
-And sigma (sd)
-mu'->Should be the similar numbers, around 2.
+And sigma (sd) mu'-\>Should be the similar numbers, around 2.
 
 ```{r}
 library(tidyverse)
 
 list.files("R", full.names = TRUE) |>  walk(source)
 ```
-
-
 
 ## Values
 
@@ -26,7 +23,6 @@ P2 <- 2
 P3 <- .2
 P3_P <- 0.4
 ```
-
 
 Transducers:
 
@@ -46,8 +42,8 @@ r_lineal_fun <- function(p, x) {
 
 ```
 
-
 Raw_data:
+
 ```{r}
 
 data_raw <- crossing(x = seq(0, 1, .05), n = 1:5000) |> 
@@ -55,15 +51,14 @@ data_raw <- crossing(x = seq(0, 1, .05), n = 1:5000) |>
 
 ```
 
-
 Plot raw data:
+
 ```{r}
 
 data_raw |> ggplot() + 
   geom_point(aes(x = x, y = y))
 
 ```
-
 
 ```{r}
 data <- data_raw |> group_by(x) |>  
@@ -73,8 +68,6 @@ data <- data_raw |> group_by(x) |>
   drop_na() |> 
   mutate(delta = dmu/sd_y)
 ```
-
-
 
 Plot mu (mean responses)
 
@@ -90,8 +83,3 @@ data |> ggplot() + geom_line(aes(x= x, y= delta)) +
 ```
 
 Constant delta, discrimination does not follow Weber's law.
-
-
-
-
-

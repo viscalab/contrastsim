@@ -1,0 +1,30 @@
+project:
+  type: book
+
+book:
+  title: "Transducers"
+  author: ""
+  date: "13/07/2023"
+  chapters:
+    - index.qmd
+    - part: Transducer simulations
+      chapters: 
+        - lineal_transducer.qmd
+        - lineal_transducer_noise.qmd
+        - log_transducer.qmd
+        - power_transducer.qmd
+    - part: Discrimination tasks simulations
+      chapters:
+        - lineal_discrimination.qmd
+        - lineal_noise_discrimination.qmd
+        - log_discrimination.qmd
+        - power_discrimination.qmd
+
+format:
+  html:
+    theme: cosmo
+  pdf:
+    documentclass: scrreprt
+
+editor: visual
+
