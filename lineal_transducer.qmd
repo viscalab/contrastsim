@@ -49,6 +49,7 @@ Raw_data:
 data_raw <- crossing(x = seq(0, 1, .05), n = 1:5000) |> 
   mutate(y = r_lineal_fun(c(P1, P2, P3), x))
 
+
 ```
 
 Plot raw data:
@@ -59,6 +60,35 @@ data_raw |> ggplot() +
   geom_point(aes(x = x, y = y))
 
 ```
+
+
+Plot with pdf distribution:
+```{r}
+
+pdf_lineal_fun <- function(y, p, x) {
+  dnorm(y, 
+        mean = mu_linear_fun(c(p[1], p[2]), x), 
+        sd = p[3]) 
+}
+
+f_lineal <- crossing(x = seq(0, 1, .05), n = 1:5000) |> 
+  mutate(y = r_lineal_fun(c(P1, P2, P3), x)) |>  
+  mutate(f = pdf_lineal_fun(y, c(P1, P2, P3), x))
+
+
+f_lineal |> 
+  ggplot(aes(x = y, y = f)) +
+  facet_wrap(vars(x), labeller = "label_both") +
+  geom_line()
+```
+```{r}
+f_lineal |> 
+  ggplot(aes(x = y, y = f)) +
+  facet_wrap(vars(x), labeller = "label_both", nrow = 1) +
+  geom_line() +
+  coord_flip()
+```
+
 
 ```{r}
 data <- data_raw |> group_by(x) |>  

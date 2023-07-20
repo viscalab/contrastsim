@@ -46,6 +46,36 @@ data_raw |> ggplot() +
 
 ```
 
+Plot with pdf distribution:
+
+```{r}
+pdf_fun_log <- function(y, p, x) {
+  dnorm(y, 
+        mean = mu_log_fun (x), 
+        sd = p[3]) 
+}
+
+
+pdf_log <- crossing(x = seq(0, 1, .05), n = 1:5000) |> 
+  mutate(y = r_log_vectorized_fun(x)) |> 
+  mutate(f = pdf_fun_log(y, c(P1, P2, P3), x))
+
+pdf_log |> 
+  ggplot(aes(x = y, y = f)) +
+  facet_wrap(vars(x), labeller = "label_both") +
+  geom_line()
+```
+
+
+```{r}
+pdf_log |> 
+  ggplot(aes(x = y, y = f)) +
+  facet_wrap(vars(x), labeller = "label_both", nrow = 1) +
+  geom_line() +
+  coord_flip()
+```
+
+
 ```{r}
 data <- data_raw |> group_by(x) |>  
   summarise(mean_y= mean(y), sd_y=sd(y)) |> 

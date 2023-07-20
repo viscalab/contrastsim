@@ -61,6 +61,36 @@ data_raw |> ggplot() +
 
 ```
 
+Plot with pdf distribution:
+```{r}
+
+pdf_lineal_fun_noise <- function(y, p, x) {
+  dnorm(y, 
+        mean = mu_linear_fun(c(p[1], p[2]), x), 
+        sd = p[3]*y) 
+}
+
+
+pdf_lineal_noise <- crossing(x = seq(0, 1, .05), n = 1:5000) |> 
+  mutate(y = r_lineal_vectorized_fun(c(P1, P2, P3), x)) |> 
+  mutate(f = pdf_lineal_fun_noise(y, c(P1, P2, P3), x))
+
+pdf_lineal_noise |> 
+  ggplot(aes(x = y, y = f)) +
+  facet_wrap(vars(x), labeller = "label_both") +
+  geom_line()
+
+```
+```{r}
+pdf_lineal_noise |> 
+  ggplot(aes(x = y, y = f)) +
+  facet_wrap(vars(x), labeller = "label_both", nrow = 1) +
+  geom_line() +
+  coord_flip()
+```
+
+
+
 ```{r}
 data <- data_raw |> group_by(x) |>  
   summarise(mean_y= mean(y), sd_y=sd(y)) |> 

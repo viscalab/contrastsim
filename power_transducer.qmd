@@ -4,7 +4,6 @@ format: html
 editor: visual
 ---
 
-
 ```{r}
 library(tidyverse)
 
@@ -12,6 +11,7 @@ list.files("R", full.names = TRUE) |>  walk(source)
 ```
 
 Values:
+
 ```{r}
 
 p <- 0.2
@@ -54,6 +54,37 @@ data_raw |> ggplot() +
   geom_point(aes(x = x, y = y))
 
 ```
+
+Plot with pdf distribution:
+
+No lo entiendo :,()
+
+```{r}
+pdf_fun_power <- function(y, p, x) {
+  dnorm(y, 
+        mean = mu_power_fun(x, p), 
+        sd = p[3]*y) 
+}
+
+
+pdf_power <- crossing(x = seq(0, 1, .05), n = 1:5000) |> 
+  mutate(y = r_power_vectorized_fun(x, p)) |> 
+  mutate(f = pdf_fun_power(y, c(P1, P2, P3), x))
+
+pdf_power |> 
+  ggplot(aes(x = y, y = f)) +
+  facet_wrap(vars(x), labeller = "label_both") +
+  geom_point()
+```
+
+```{r}
+pdf_power |> 
+  ggplot(aes(x = y, y = f)) +
+  facet_wrap(vars(x), labeller = "label_both", nrow = 1) +
+  geom_line() +
+  coord_flip()
+```
+
 
 
 ```{r}
